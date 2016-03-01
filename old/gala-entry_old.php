@@ -1,16 +1,4 @@
 <?php
-/*
-Plugin Name: Gala Entry
-Plugin URI: http://URI_Of_Page_Describing_Plugin_and_Updates
-Description: NDSC Gala Entry plugin for Wordpress.
-Version: 0.1
-Author: Ian Crane
-Author URI: http://URI_Of_The_Plugin_Author
-License: 
-*/
-?>
-
-<?php
 
 require_once 'gala_routines.php';
 
