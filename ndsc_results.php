@@ -11,6 +11,7 @@
  require_once 'db_routines.php';
  require_once 'admin_menu.php';
  require_once 'gala_entry.php';
+ require_once 'db_gala_routines';
 
 
 // Form to select the desired top times results and

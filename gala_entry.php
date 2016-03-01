@@ -37,7 +37,7 @@ add_shortcode( 'gala_entry_start', 'gala_entry_start_func' );
 
 
 // Find the swimmer to enter
-// function to display search dialog for swimer PBs
+// function to display search dialog for swimers
 // Includes div for Ajax to place matching swimmers
 function ajaxndsc_showswimmersearch (){
 	ob_start();
