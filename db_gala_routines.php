@@ -1,5 +1,40 @@
 <?php
 
+// Load the requested gala basic values and return html to display
+// the Gala name
+function load_gala ($gala_index)
+{
+    	$mysqli = openDatabase($db_gala_name);
+
+
+	$stmt = $mysqli->prepare('SELECT `name`, `event_index`, `active`, `event_cost_pence` FROM `gala_list` WHERE `event_index` = ?');
+	$stmt->bind_param('i', $gala_index);
+	$stmt->execute();
+	$stmt->store_result();
+        
+        // Check to see only one event matches
+	if ($stmt->num_rows != 1) {
+		return "Unable to find a gala for you to enter";
+	}
+        
+	// save it in the session
+       	$stmt->bind_result($name, $event_index, $active, $event_cost_pence);
+
+	$row = $res->fetch_assoc();
+	extract($row);
+	$_SESSION['gala_name'] = $name;
+	$_SESSION['gala_live'] = $active;
+	$_SESSION['event_cost_pence'] = $event_cost_pence;
+	$_SESSION['gala_index'] = $gala_index;
+	
+	ob_start();
+	echo "<h2>{$_SESSION['gala_name']}</h2>" ;
+	printf ("<p>Events cost &pound;%.2f each to enter</p>", $event_cost_pence / 100);
+	$output = ob_get_contents();
+	ob_end_clean();
+	return $output;
+}
+
 // Gala entry
 // Return HTML to display a table of matching swimmers
  function display_gala_swimmersearch_func ($typedName)

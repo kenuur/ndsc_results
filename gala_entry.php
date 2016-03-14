@@ -10,30 +10,11 @@ $db_gala_name = "ndsccouk_swim_gala";
 // get the gala info from the database
 // and save it in the session
 function gala_entry_start_func ($atts) {
-	$mysqli = openDatabase($db_gala_name);
-
-	extract( shortcode_atts( array('gala_index' => '1'), $atts ) );
-
-	$sql = "SELECT `name`, `index`, `active`, `event_cost_pence` FROM `gala_list` WHERE `index` = {$gala_index}";
-	$res = getResults ($mysqli, $sql);
-
-	// save it in the session
-	$row = $res->fetch_assoc();
-	extract($row);
-	$_SESSION['gala_name'] = $name;
-	$_SESSION['gala_live'] = $active;
-	$_SESSION['event_cost_pence'] = $event_cost_pence;
-	$_SESSION['entry_surcharge_pence'] = $entry_surcharge_pence;
-	$_SESSION['gala_index'] = $gala_index;
-	
-	ob_start();
-	echo "<h2>{$_SESSION['gala_name']}</h2>" ;
-	printf ("<p>Events cost &pound;%.2f each to enter</p>", $event_cost_pence / 100);
-	$output = ob_get_contents();
-	ob_end_clean();
-	return $output;
+    extract( shortcode_atts( array('gala_index' => '1'), $atts ) );
+    //echo "Gala index is $gala_index\n";
+    return load_gala((int)$gala_index);
 }
-add_shortcode( 'gala_entry_start', 'gala_entry_start_func' );
+add_shortcode( 'GALAENTRYSTART', 'gala_entry_start_func' );
 
 
 // Find the swimmer to enter
