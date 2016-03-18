@@ -8,7 +8,7 @@ function ajaxndscgala_swimmersearch() {
 	}
     jQuery.ajax({
         type: 'POST',
-        url: ajaxndscresultsajax.ajaxurl,
+        url: ajaxndscgalaajax.ajaxurl,
         data: {
             action: 'ajaxndscgala_swimmersearch_ajaxhandler',
             form_data: form_data
