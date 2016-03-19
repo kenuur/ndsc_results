@@ -75,7 +75,7 @@ function load_gala ($gala_index)
                     //echo '<tr>';
                     $argument = "'$athleteName'";
                     //echo '<td><a onclick="ajaxndscresults_swimmerresults('. $argument .')" >';
-                    echo '<input type="radio" name="swimmer" value="'. $asaNo . '" required>'.$athleteName. ' - '. $asaNo . "</input></BR>\n";
+                    echo '<a href="gala_enter?id=', $asaNo, '>', $athleteName, ' - ', $asaNo, '</a>';
                     //echo "$athleteName</a></td>";
                     //echo '</tr>'. PHP_EOL;
             }
