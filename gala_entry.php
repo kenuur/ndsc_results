@@ -19,7 +19,9 @@ function gala_entry_start_func ($atts) {
     }
     
     //TODO Save gala details to session
-    
+    foreach ($gala_details as $key => $value) {
+        $_SESSION[$key] = $value;
+    }
     ob_start();
     echo "<h2>{$gala_details['gala_name']}</h2>" ;
     printf ("<p>Events cost &pound;%.2f each to enter</p>", $gala_details['event_cost_pence'] / 100);
