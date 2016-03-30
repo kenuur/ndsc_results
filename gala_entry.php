@@ -116,31 +116,25 @@ add_action('wp_enqueue_scripts', ajaxndscgala_enqueuescripts);
 // gets the chosen athlete
 // put on a new page called fetch_swimmer
 function gala_entry_retrieve_athelete_func ($atts) {
-	if (!array_key_exists("swimmer", $_GET)) {
-		$_SESSION['submit_disabled'] = TRUE;
-		return 'Somthing went wrong, No swimmer ID provided';
-	}
+    if (!array_key_exists("id", $_GET)) {
+            return 'Somthing went wrong, No swimmer ID was provided';
+    }
+    $swimmerID = $_GET["id"];
 
-	// Get athlete data from database
-	$mysqli = openNDSC();
-	$sql = "SELECT Last, First, ID_NO, Sex, Birth, `Group` FROM `athlete` WHERE `Inactive`=0 AND SubGr='SW' AND (ID_NO='". $_GET["swimmer"] ."') ORDER BY Last ASC";
-	$res = getResults ($mysqli, $sql);
+    // Get athlete data from database
+    $swimmerDetails = fetchSwimmer($swimmerID);
 
-	if ($res->num_rows == 0) {
-		return "Somthing went wrong, couldn't find swimmer: ". $_GET["swimmer"];
-	}
-	if ($res->num_rows > 1) {
-		return "Somthing went wrong, more than one swimmer with that ID: ". $_GET["swimmer"];
-	}
+    // check for an errror response
+    if (array_key_exists('error', $swimmerDetails))
+    {
+        return $swimmerDetails['error'] . "<br>";
+    }
+    // add the swimmers details to the sessiom
+    $_SESSION['AsaNo'] = $swimmerID;
+    foreach ($swimmerDetails as $key => $value) {
+        $_SESSION[$key] = $value;
+    }
 
-	$row = $res->fetch_assoc();
-	extract($row);
-	// setup the session variables
-	$_SESSION['swimmer_name']= $First .' '. $Last;
-	$_SESSION['swimmer_ID']=$ID_NO;
-	$_SESSION['athlete_group']=$Group;
-	$_SESSION['gender']=$Sex;
-	
-	return "Name: {$_SESSION['swimmer_name']} <br>ID: $ID_NO <br>Squad: $Group <br>". PHP_EOL;
+    return "Name: " . $_SESSION['swimmer_name'] .  "<br>ID: " . $swimmerID . "<br>Squad: " . $_SESSION['athlete_squad'] . "<br>". PHP_EOL;
 }
 add_shortcode( 'gala_entry_retrieve_athelete', 'gala_entry_retrieve_athelete_func' );
