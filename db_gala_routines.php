@@ -94,5 +94,24 @@ function fetchSwimmer($swimmerID)
 // TODO refine to limit by squad
 // TODO give warning message where permission is needed
 function fetchEvents($gala, $sex) {
+    $events = array();
+    global $db_gala_name;
+    $mysqli = openDatabase($db_gala_name);
+    if ($stmt = $mysqli->prepare('SELECT sex, event_name, event_type, event_number FROM gala_events WHERE gala = ? AND sex = ?')) {
+        $stmt->bind_param('ss', $gala, $sex);
+        $stmt->execute();
+        $stmt->store_result();
+        $stmt->bind_result($sex, $eventName, $eventType, $eventNumber);
+        
+        while ($stmt->fetch()) {
+            $event = array();
+            $event['sex']=$sex;
+            $event['name']=$eventName;
+            $event['type']=$eventType;
+            $event['number']=$eventNumber;
+            $events[]=$event;
+        }
+    }
     
+    return $events;
 }

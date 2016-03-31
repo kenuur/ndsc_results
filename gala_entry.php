@@ -2,6 +2,16 @@
 
 $db_gala_name = "ndsccouk_swim_gala";
 
+// start the session when worpress is initializing
+add_action('init', 'myStartSession', 1);
+function myStartSession() {
+    if(!session_id()) {
+        session_start();
+    }
+}
+
+
+
 // swimming gala entry pages
 // gala details are loaded from the db and the user is allowed to search for the
 // swimmer to enter. 
@@ -24,6 +34,8 @@ function gala_entry_start_func ($atts) {
     }
     ob_start();
     echo "<h2>{$gala_details['gala_name']}</h2>" ;
+    //echo $_SESSION['gala_index'];
+    //echo $_SESSION['gala_name'];
     printf ("<p>Events cost &pound;%.2f each to enter</p>", $gala_details['event_cost_pence'] / 100);
     printf ("<p>Closing date is midnight on %s</p>", date('l jS \of F',$gala_details['closing_date']));
     $output = ob_get_contents();
@@ -111,11 +123,17 @@ function ajaxndscgala_enqueuescripts() {
 add_action('wp_enqueue_scripts', ajaxndscgala_enqueuescripts);
 
 
+function gala_entry_eventspage_func($atts) {
+    $athleteHtml = gala_entry_retrieve_athelete($atts);
+    $eventsHtml = gala_entry_displayevents();
+    return $athleteHtml . $eventsHtml;
+}
+add_shortcode( 'gala_entry_eventspage', 'gala_entry_eventspage_func' );
+
 // retrieve athlete data and store in session
 // display athlete name
 // gets the chosen athlete
-// put on a new page called fetch_swimmer
-function gala_entry_retrieve_athelete_func ($atts) {
+function gala_entry_retrieve_athelete ($atts) {
     if (!array_key_exists("id", $_GET)) {
             return 'Somthing went wrong, No swimmer ID was provided';
     }
@@ -134,7 +152,11 @@ function gala_entry_retrieve_athelete_func ($atts) {
     foreach ($swimmerDetails as $key => $value) {
         $_SESSION[$key] = $value;
     }
-
-    return "Name: " . $_SESSION['swimmer_name'] .  "<br>ID: " . $swimmerID . "<br>Squad: " . $_SESSION['athlete_squad'] . "<br>". PHP_EOL;
+    
+    return "Name: " . $_SESSION['swimmer_name'] .  " - ASA No: " . $swimmerID . " - Squad: " . $_SESSION['athlete_squad'] . "<br>". PHP_EOL;
 }
-add_shortcode( 'gala_entry_retrieve_athelete', 'gala_entry_retrieve_athelete_func' );
+
+function gala_entry_displayevents() {
+    $events = fetchEvents($_SESSION['gala_index'], $_SESSION['gender']);
+    return $events[0]['name'];
+}
