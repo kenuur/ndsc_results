@@ -157,6 +157,13 @@ function gala_entry_retrieve_athelete ($atts) {
 }
 
 function gala_entry_displayevents() {
+	// get events form the databse that match the gala and gender of swimmer
     $events = fetchEvents($_SESSION['gala_index'], $_SESSION['gender']);
+	
+	// display a form that will allow user to select events and enter time
+	
+	
+	
+	
     return $events[0]['name'];
 }
