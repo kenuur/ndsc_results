@@ -161,9 +161,17 @@ function gala_entry_displayevents() {
     $events = fetchEvents($_SESSION['gala_index'], $_SESSION['gender']);
 	
 	// display a form that will allow user to select events and enter time
-	
-	
-	
-	
-    return $events[0]['name'];
+	ob_start();
+	echo '<form><table>';
+	foreach ($events as $event) {
+		echo '<tr>';
+		echo "<td>$event['number']</td>";
+		echo "<td>$event['name']</td>";
+		echo '</tr>';
+	}
+	echo '</table></form>';
+	$output = ob_get_contents();
+	ob_end_clean();
+	return $output;		
+
 }
