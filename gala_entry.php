@@ -153,25 +153,104 @@ function gala_entry_retrieve_athelete ($atts) {
         $_SESSION[$key] = $value;
     }
     
-    return "Name: " . $_SESSION['swimmer_name'] .  " - ASA No: " . $swimmerID . " - Squad: " . $_SESSION['athlete_squad'] . "<br>". PHP_EOL;
+    return "Name: " . $_SESSION['swimmer_name'] .  " - ASA No: " . $swimmerID . " - Squad: " . $_SESSION['athlete_squad'] . "<br><br>". PHP_EOL;
 }
 
 function gala_entry_displayevents() {
-	// get events form the databse that match the gala and gender of swimmer
+    if (!array_key_exists("id", $_GET)) {
+        return '';
+    }
+	// get events from the dataabse that match the gala and gender of swimmer
     $events = fetchEvents($_SESSION['gala_index'], $_SESSION['gender']);
 	
 	// display a form that will allow user to select events and enter time
 	ob_start();
-	echo '<form><table>';
+        echo 'Enter a time for events you wish to enter like 1:23.45 or 57.89<br>';
+        echo 'If you dont have a time enter NT<br>';
+        echo 'Leave the time blank to not enter that event<br><br>' . PHP_EOL;
+	echo '<form action="gala-entry-3"><table>';
+        echo '<tr><th>Event Number</th>';
+        echo '<th>Event Name</th>';
+        echo '<th>Entered time</th></tr>';
+        $event_names = array();
 	foreach ($events as $event) {
 		echo '<tr>';
-		echo "<td>$event['number']</td>";
-		echo "<td>$event['name']</td>";
-		echo '</tr>';
-	}
-	echo '</table></form>';
+		echo '<td>' . $event['number'] . '<input type="hidden" name="eventnos[]" value="' . $event['number'] . '"></td>' . PHP_EOL;
+		echo '<td>' . $event['name'] . '</td>' . PHP_EOL;
+                $event_names[] = $event['name'];
+		echo '<td><input type="text" name="entered_times[]" maxlength="8" size="8" maxlength="8" ';
+		echo 'pattern="^([1-2]?[0-9]:)?[0-5][0-9]\.[0-9]{2}$|NT|nt" title="time like 1:23.45 or 57.89 or NT or blank if not entering"';
+		echo '></td></tr>'. PHP_EOL;
+        }
+	echo '</table><input type="submit" value="Submit"></form>'; 
+        $_SESSION['eventnames'] = $event_names;
 	$output = ob_get_contents();
 	ob_end_clean();
 	return $output;		
+}
 
+
+function gala_entry_eventsconfirm_func($atts) {
+    $entryDetails = array();
+    
+    // check all the arrays are populated
+    $entryDetails['times'] = cleanEntryTimes($_GET['entered_times']) ;
+    $eventCount = count($entryDetails['times']);
+    $entryDetails['eventno'] = $_GET['eventnos'];
+    if ($eventCount != count ($entryDetails['eventno'])) { return 'System error, please try again'; }
+    $entryDetails['eventname'] = $_SESSION['eventnames'];
+    if ($eventCount != count ($entryDetails['eventname'])) { return 'System error, please try again'; }
+    
+    
+
+    $indx = 0;
+    ob_start();
+    echo '<table>';
+    while ($indx < $eventCount) {
+        echo '<tr>';
+        echo '<td>' . $entryDetails['eventno'][$indx] . '</td>';
+        echo '<td>' . $entryDetails['eventname'][$indx] . '</td>';
+        echo '<td>' . $entryDetails['times'][$indx] . '</td>';
+        echo '</tr>';
+        $indx++;
+    }
+    echo '</table>';
+    $output = ob_get_contents();
+    ob_end_clean();
+    return $output;	
+}
+add_shortcode( 'gala_entry_eventsconfirm', 'gala_entry_eventsconfirm_func' );
+
+function cleanEntryTimes ($entryTimes)
+{
+    $pattern = '/^([1-2]?[0-9]:)?[0-5][0-9]\.[0-9]{2}$/';
+
+    foreach ($entryTimes as $rawEntryTime)
+    {
+        $rawEntryTime = trim($rawEntryTime);
+
+        // if the user typed anything
+        if (strlen($rawEntryTime) > 0) {
+            // NT means no entry time
+            if (strcasecmp ($rawEntryTime, "NT") == 0) {
+                $clean_entrytimes[] =  "No Time";
+            }
+            // aything else check it matches a valid input format
+            else {
+                // if valid, put time in the clean array
+                if (preg_match ($pattern, $rawEntryTime)) {
+                    $clean_entrytimes[] =  $rawEntryTime;
+                }
+                // not valid format
+                else {
+                    $clean_entrytimes[] =  "Invalid";
+                }
+            }
+        }
+        // nothing typed so no entry
+        else {
+            $clean_entrytimes[] = "NOENTRY";
+        }
+    }
+    return $clean_entrytimes;
 }
