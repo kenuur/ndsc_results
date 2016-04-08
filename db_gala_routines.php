@@ -9,7 +9,7 @@ function load_gala ($gala_index)
     global $db_gala_name;
     $mysqli = openDatabase($db_gala_name);
 
-    $stmt = $mysqli->prepare('SELECT `name`, `active`, `event_cost_pence`, UNIX_TIMESTAMP(`closing_date`) FROM `gala_list` WHERE `gala_index` = ?');
+    $stmt = $mysqli->prepare('SELECT `name`, `active`, `event_cost_pence`, UNIX_TIMESTAMP(`closing_date`), description FROM `gala_list` WHERE `gala_index` = ?');
     $stmt->bind_param('i', $gala_index);
     $stmt->execute();
     $stmt->store_result();
@@ -20,7 +20,7 @@ function load_gala ($gala_index)
     }
 
     // save it in the session
-    $stmt->bind_result($name, $active, $event_cost_pence, $closing_date);
+    $stmt->bind_result($name, $active, $event_cost_pence, $closing_date, $description);
 
     $result = array();
 
@@ -33,6 +33,7 @@ function load_gala ($gala_index)
     $result['event_cost_pence'] = $event_cost_pence;
     $result['gala_index'] = $gala_index;
     $result['closing_date'] = $closing_date;
+    $result['description'] = $description;
     return $result;
 }
 
@@ -82,11 +83,12 @@ function fetchSwimmer($swimmerID)
     // load the one record into the result array to return
     $row = $res->fetch_assoc();
     extract($row);
-    // setup the session variables
+    // return the swimmer details
     $results['swimmer_name']= $AthleteName;
     $results['athlete_squad']=$Squad;
     $results['gender']=$Sex;
     $results['BirthDate']=$BirthDate;
+    $results['AsaNo']=$swimmerID;
     return $results;
 }
 
@@ -114,4 +116,32 @@ function fetchEvents($gala, $sex) {
     }
     
     return $events;
+}
+
+// save the entry into the database
+// return the index to the entry as we will need to update it later
+function saveEntry ($galaDetails, $swimmerDetails, $entryCost, $entryDetails)
+{
+    global $db_gala_name;
+    $paymentStatus = "UNPAID";
+    $mysqli = openDatabase($db_gala_name);
+    // save the entry to the database
+    $stmt = $mysqli->prepare('INSERT INTO gala_swimmer_entry (AsaNo, gala_id, payment_amount, payment_status) VALUES (?, ?, ?, ?)');
+    $stmt->bind_param('sids', $swimmerDetails['AsaNo'], $galaDetails['gala_index'], $entryCost, $paymentStatus);
+    $stmt->execute();
+    $swimmerEntryIndex =  $mysqli->insert_id;
+    // save the entered events to the database
+    $stmt = $mysqli->prepare('INSERT INTO gala_event_entry (swimmer_entry, event_no, time) VALUES (?, ?, ?)');
+    $stmt->bind_param('iis', $swimmerEntryIndex, $eventNo, $time);
+    $eventCount = count($entryDetails['times']);
+    $indx = 0;
+    while ($indx < $eventCount) {
+        if ($entryDetails['times'][$indx] !=  "NOENTRY" ) {
+            $eventNo = $entryDetails['eventno'][$indx];
+            $time = $entryDetails['times'][$indx];
+            $stmt->execute();
+        }
+        $indx++;
+    }
+    return $swimmerEntryIndex;
 }

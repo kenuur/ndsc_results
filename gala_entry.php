@@ -28,16 +28,16 @@ function gala_entry_start_func ($atts) {
         return "Unable to find an active Gala to enter";
     }
     
-    //TODO Save gala details to session
-    foreach ($gala_details as $key => $value) {
-        $_SESSION[$key] = $value;
-    }
+    //Save gala details to session
+    $_SESSION['gala_details']=$gala_details;
+    
     ob_start();
     echo "<h2>{$gala_details['gala_name']}</h2>" ;
     //echo $_SESSION['gala_index'];
     //echo $_SESSION['gala_name'];
     printf ("<p>Events cost &pound;%.2f each to enter</p>", $gala_details['event_cost_pence'] / 100);
     printf ("<p>Closing date is midnight on %s</p>", date('l jS \of F',$gala_details['closing_date']));
+    printf ("<p>%s</p>", $gala_details['description']);
     $output = ob_get_contents();
     ob_end_clean();
     return $output;
@@ -148,12 +148,9 @@ function gala_entry_retrieve_athelete ($atts) {
         return $swimmerDetails['error'] . "<br>";
     }
     // add the swimmers details to the sessiom
-    $_SESSION['AsaNo'] = $swimmerID;
-    foreach ($swimmerDetails as $key => $value) {
-        $_SESSION[$key] = $value;
-    }
+    $_SESSION['swimmer_details'] = $swimmerDetails;
     
-    return "Name: " . $_SESSION['swimmer_name'] .  " - ASA No: " . $swimmerID . " - Squad: " . $_SESSION['athlete_squad'] . "<br><br>". PHP_EOL;
+    return "Name: " . $_SESSION['swimmer_details']['swimmer_name'] .  " - ASA No: " . $swimmerID . " - Squad: " . $_SESSION['swimmer_details']['athlete_squad'] . "<br><br>". PHP_EOL;
 }
 
 function gala_entry_displayevents() {
@@ -161,7 +158,7 @@ function gala_entry_displayevents() {
         return '';
     }
 	// get events from the dataabse that match the gala and gender of swimmer
-    $events = fetchEvents($_SESSION['gala_index'], $_SESSION['gender']);
+    $events = fetchEvents($_SESSION['gala_details']['gala_index'], $_SESSION['swimmer_details']['gender']);
 	
     // display a form that will allow user to select events and enter time
     ob_start();
@@ -212,7 +209,7 @@ function gala_entry_eventsconfirm_func($atts) {
     echo 'Summary of entry:';
     echo '<table>';
     while ($indx < $eventCount) {
-        // only display enetered events
+        // only display entered events
         if ($entryDetails['times'][$indx] !=  "NOENTRY" ) {
             $entryCount++;
             echo '<tr>';
@@ -247,9 +244,9 @@ function gala_entry_eventsconfirm_func($atts) {
         $submitDisabled = "Disabled";
     }
     echo '<p>';
-    echo '<form action="gala-entry-4">';
-    //printf('<input type="image" name=submit value="GoCardless" src="https://s3-eu-west-1.amazonaws.com/gocardless/images/public/buttons/updated/pay-with-gc-small.png" alt="Submit" %s><br>', $submitDisabled);
-    printf('<input type="submit" value="Confirm" %s></form>', $submitDisabled);
+    echo '<form action="gala-entry-4" method="get">';
+    //printf('<input type="image" name="payment" value="GoCardless" src="https://s3-eu-west-1.amazonaws.com/gocardless/images/public/buttons/updated/pay-with-gc-small.png" alt="Submit" %s><br>', $submitDisabled);
+    printf('<input type="submit" value="Cheque" name="payment" %s></form>', $submitDisabled);
     $output = ob_get_contents();
     ob_end_clean();
     // store the entry details in the session if valid
@@ -298,14 +295,31 @@ function cleanEntryTimes ($entryTimes)
 // calculate and return the cost for the number of entries
 // store the cost in the session
 function entryCost($numEvents) {
-    $entryCost = ($numEvents * $_SESSION['event_cost_pence']) / 100;
+    $entryCost = ($numEvents * $_SESSION['gala_details']['event_cost_pence']) / 100;
     $_SESSION['total_entry_cost'] = $entryCost;
     return sprintf('£%.2f', $entryCost);
 }
 
 // save the entry in the database
 // display the payment options
-function gala_entry_save_entry_func() {
-    
+function gala_entry_save_entry() {
+    $_SESSION['entry_index'] = saveEntry($_SESSION['gala_details'], $_SESSION['swimmer_details'], $_SESSION['total_entry_cost'], $_SESSION['entryDetails']);
 }
-add_shortcode( 'gala_entry_save_entry', 'gala_entry_save_entry_func' );
+
+// user has confirmed their entry and selected payment type
+// handle the entry depending on the payment tye selected
+function gala_entry_take_payment_func() {
+    
+    gala_entry_save_entry();
+    $paymentMethod = filter_input(INPUT_GET, 'payment', FILTER_SANITIZE_STRING);
+    switch ($paymentMethod) {
+        case 'Cheque':
+            echo 'You chose cheque!';
+
+            break;
+
+        default:
+            break;
+    }
+}
+add_shortcode( 'gala_entry_take_payment', 'gala_entry_take_payment_func' );
